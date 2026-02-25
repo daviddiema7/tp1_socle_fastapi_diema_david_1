@@ -1,119 +1,202 @@
-TP1
+# TP1 – 
 
-2.Activer un environnement virtuelle:source venv/bin/activate
+## 1. Environnement virtuel
 
-4.Geler la configuration: pip freeze > requirements-dev.txt permet de faire une sorte de boite rempli des outil dont le projet a besoin pour fonctionner
+### 1.1 Création de l’environnement virtuel
 
-partie2 du tp1
+```bash
+python -m venv venv
+```
 
-1 Lancer l'app grace a uvicorn : uvicorn app.main:app --reload
+### 1.2 Activation de l’environnement virtuel
 
-Partie 4 
-4.2
+```bash
+source venv/bin/activate
+```
 
-cas 2 
+### 1.3 Geler la configuration du projet
 
-non la fonction n'est pas executer 
+```bash
+pip freeze > requirements-dev.txt
+```
 
-le code http retourné est le code 422
-le parametre concerné est user id
-le type attendu est un int 
+Cette commande permet de générer un fichier contenant toutes les dépendances nécessaires au bon fonctionnement du projet.  
+On peut comparer cela à une « boîte à outils » contenant tout ce dont le projet a besoin pour fonctionner correctement sur une autre machine.
 
-4.3
-Le paramètre n'est pas obligatoire car on a mis None 
+---
 
-2 Dans notre cas la valeur est toujours accepter car on a mis str peut importe le type il sera toujours convertit en str 
+# Partie 2 – Lancement de l’application
 
+Pour démarrer l’application avec Uvicorn :
 
+```bash
+uvicorn app.main:app --reload
+```
 
-partie 5
+- `app.main` correspond au module Python  
+- `app` correspond à l’instance FastAPI  
+- `--reload` permet le redémarrage automatique lors des modifications  
 
-Field permet de:
-                -exprimer des règles métiers simple
-                -documenter les contraintes dans Swagger 
-                -centraliser la validation dans le modèle 
+---
 
-1.Pourquoi le champ id n'est il pas présentd ans le modèle UserCreate?
-Parce que il n'existe pas encore au moment ou l'utilisateur envoie les données 
+# Partie 4 – Validation et paramètres
 
-2.A quelle moment et par qui l'identifiant d'un utilisateur doit-il etre attribuer?
-C'est la base de données qui s'en charge au moment de l'ecriture(insertion)
+## 4.2 Cas 2
 
-5.2 
+- La fonction n’est pas exécutée  
+- Le code HTTP retourné est 422 (Unprocessable Entity)  
+- Le paramètre concerné est `user_id`  
+- Le type attendu est `int`  
 
-1Pourquoi a t'on defini deux modeles distinct usermodel et usermodelcreate?
+L’erreur se produit car FastAPI valide automatiquement les types.  
+Si le type ne correspond pas, la requête est rejetée avant même l’exécution de la fonction.
 
+---
 
-Pour séparer les role usermodelcreate c'est ce que l'utilisater a le droit  d'entréer pour s'inscrire c'est les données entrantes 
+## 4.3 Paramètres optionnels
 
-usermodel c'est ce que le systeme renvoie c'est les donnnées sortante 
+Le paramètre n’est pas obligatoire car nous avons mis `None` comme valeur par défaut.
 
-2. Pourquoi le champ id n'apparait il pas dans usermodelcreate?
+Exemple :
 
-Car l'utilisateur ne peut pas taper lui meme sont id sinon il pourrais ecraser celui d'un utilisateur déjà existant c'est pour la sécutité 
+```python
+name: str | None = None
+```
 
-3.A quel moment et par qui l'identifiant id d'un utilisateur est il attribué?
+Dans notre cas, la valeur est toujours acceptée car nous avons utilisé `str`.  
+Peu importe le type envoyé, il sera converti en chaîne de caractères.
 
-Au moment de la sauvegarde en base de données par le composant le composant qui gere le stockage.
+---
 
-4.Parceque ducoup l'utilisateur devrait deviner quelle id mettre qui n'est pas deja attribuer a un autre utilisateur dans le cas ou on dois entrer un id obligatoirmeent et meme dans le cas se serait optionnel avec none il faudrais ducoup faire de longue condition pour verifier que l'id n'est pas null et sa polluerais le code.
+# Partie 5 – Modèles Pydantic et Architecture
 
-5.Pourquoi n'utilise t'on pas l'heritage entre usermodelcreate et usermodel alors qu'il serait possible de refactoriser certains attributs?
+## 5.1 Field
 
-pour la sécurite imaginons que plus tard je veuille donner la possibilité a l'utilisateur d'entrer un mot de passe dans usermodel  create si usermodel herite de usermodelcreate il verra le mot de passe et quand il renverra le profile de l'utilisateur on verra sont mdp ce qui en fait une grosse faille de sécurité.
+`Field` permet de :
 
-5.3 
-1.POurquoi UserFactory ne dois pas importer FastAPI?
+- Exprimer des règles métier simples  
+- Documenter les contraintes dans Swagger  
+- Centraliser la validation dans le modèle  
 
-POur sépararer les repsonsabilité fastapi s'occupe du coter web avec les requette get etc... alors que la factory lit des fichiers texte et construit des objets python 
+### 1. Pourquoi le champ `id` n’est-il pas présent dans le modèle `UserCreate` ?
 
-2.Quels seraient les inconvenients si la factory dépendait directement de FastAPI?
- 
-Cela poserait des problème au niveau des test il faudrait qu'on charge tout le moteur web et sa ralentirais les test de plus si fastAPI fais une mise a jour de sont système la factory peut se mettre a bugger
+Parce qu’il n’existe pas encore au moment où l’utilisateur envoie les données.
 
-3 Dans quel autre contexte en dehors d'une API fastapi on pourrrais reutiliser cette factory?
+### 2. À quel moment et par qui l’identifiant d’un utilisateur doit-il être attribué ?
 
-Dans un script en ligne de commande qui permet de compter le nombre d'utilisateur et de generer un pdf 
+L’identifiant est attribué par la base de données au moment de l’insertion (écriture).
 
-ou Dans une application de bureau qui permettrai a un agent d'accueil de gérer le utilisateur depuis une interface 
+---
 
-5.5
-listez au moins 3 cas de test pertinent pour vérifier le comportement de la factory 
+## 5.2 Séparation des modèles
 
-On peut tester le cas ou le json envoyer est parfait et il retourne une liste de model 
+### 1. Pourquoi a-t-on défini deux modèles distincts `UserModel` et `UserModelCreate` ?
 
-Le cas ou le la clé users n'est pas presente ou que la clé est différente de users
+Pour séparer les rôles :
 
-Le cas ou une des valeurs est incorrecte par exemple age vaut -10
+- `UserModelCreate` correspond aux données que l’utilisateur a le droit d’entrer lors de son inscription (données entrantes)  
+- `UserModel` correspond aux données renvoyées par le système (données sortantes)  
 
-Quelle est le problème avec le chemin du fichier json factory.create_users("data/users.json")
+### 2. Pourquoi le champ `id` n’apparaît-il pas dans `UserModelCreate` ?
 
--Le problme est que le chemin est figé dans le code 
+Car l’utilisateur ne peut pas saisir lui-même son identifiant.  
+Sinon, il pourrait écraser celui d’un utilisateur déjà existant, ce qui poserait un problème de sécurité.
 
--Le code dois etre changer si on change de machine 
+### 3. À quel moment et par qui l’identifiant `id` est-il attribué ?
 
--La configuration est dispersé
+Au moment de la sauvegarde en base de données, par le composant qui gère le stockage.
 
-Une variable d'environnement est une variable fourni par le système, ou fourni par l'environement d'executtion et elle n'est pas écrite dans le code
+### 4. Pourquoi ne pas rendre `id` obligatoire ou optionnel ?
 
-Pourquoi on utiliser les fichiers .env ?
+Si l’utilisateur devait fournir un `id`, il devrait deviner un identifiant non utilisé.  
+Même en le rendant optionnel, il faudrait ajouter de nombreuses vérifications (id nul, id existant, etc.), ce qui compliquerait inutilement le code.
 
-Car il permettent il permettent de -centraliser la configuration
-                                   -de ne pas modifier le code selon l'environnement
-                                   -de ne pas versionner les informations importante 
+### 5. Pourquoi ne pas utiliser l’héritage entre `UserModelCreate` et `UserModel` ?
 
+Pour des raisons de sécurité.
 
-A quoi sert le setting?
+Si plus tard on ajoute un mot de passe dans `UserModelCreate` et que `UserModel` hérite de celui-ci, le mot de passe pourrait être renvoyé dans les réponses API.  
+Cela constituerait une faille de sécurité majeure.
 
-Il permet de ne pas coder en dur et améliore la sa secutité de l'application c'est comme un panneau de configuration 
+---
 
+## 5.3 Factory et séparation des responsabilités
 
-A quoi sert monkeypatch?
+### 1. Pourquoi `UserFactory` ne doit pas importer FastAPI ?
 
--c'est un outil pytest  
--Il permet de définir une variable d'environnemet pour un test
--Il supprimer une variable d'environnement 
--il permet de garantir que chaque test est isolé et reproductible
+Pour respecter la séparation des responsabilités :
 
+- FastAPI gère le côté web (requêtes GET, POST, etc.)  
+- La factory lit des fichiers JSON et construit des objets Python  
 
+Chaque composant doit avoir une responsabilité claire.
 
+### 2. Quels seraient les inconvénients si la factory dépendait directement de FastAPI ?
+
+- Les tests seraient plus lourds car il faudrait charger le moteur web  
+- Les tests seraient plus lents  
+- Une mise à jour de FastAPI pourrait casser la factory  
+- Le couplage serait trop fort entre les couches  
+
+### 3. Dans quel autre contexte pourrait-on réutiliser cette factory ?
+
+- Dans un script en ligne de commande pour compter les utilisateurs et générer un PDF  
+- Dans une application de bureau permettant à un agent d’accueil de gérer les utilisateurs via une interface graphique  
+
+---
+
+## 5.5 Tests de la factory
+
+### Trois cas de test pertinents :
+
+1. Cas nominal : le JSON est correct et retourne une liste de modèles  
+2. La clé `users` est absente ou mal nommée  
+3. Une valeur est invalide (exemple : âge = -10)  
+
+---
+
+## Problème avec le chemin du fichier JSON
+
+Exemple :
+
+```python
+factory.create_users("data/users.json")
+```
+
+Problèmes :
+
+- Le chemin est figé dans le code  
+- Il faut modifier le code si on change de machine  
+- La configuration est dispersée  
+
+---
+
+## Variables d’environnement
+
+Une variable d’environnement est une variable fournie par le système ou par l’environnement d’exécution.  
+Elle n’est pas écrite directement dans le code.
+
+### Pourquoi utiliser un fichier `.env` ?
+
+- Centraliser la configuration  
+- Ne pas modifier le code selon l’environnement (dev, test, prod)  
+- Ne pas versionner des informations sensibles  
+
+---
+
+## À quoi sert `Settings` ?
+
+Il permet d’éviter de coder en dur les paramètres de configuration.  
+Il améliore la sécurité et agit comme un panneau de configuration centralisé pour l’application.
+
+---
+
+## À quoi sert `monkeypatch` ?
+
+`monkeypatch` est un outil de pytest.
+
+Il permet :
+
+- De définir une variable d’environnement pour un test  
+- De supprimer une variable d’environnement  
+- De garantir que chaque test est isolé et reproductible  
